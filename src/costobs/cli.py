@@ -74,11 +74,35 @@ def build_parser() -> argparse.ArgumentParser:
         default=",".join(REQUIRED_TAGS),
         help="comma-separated required allocation tags (default: owner,team,environment)",
     )
+    parser.add_argument(
+        "--budget",
+        action="append",
+        default=[],
+        metavar="OWNER=AMOUNT",
+        help="per-owner monthly budget, e.g. --budget alice=5000 (repeatable). "
+        "Forecast spend over budget is flagged.",
+    )
     return parser
 
 
 def _split_csv(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _parse_budgets(pairs: Sequence[str]) -> dict[str, float]:
+    budgets: dict[str, float] = {}
+    for pair in pairs:
+        if "=" not in pair:
+            raise ValueError(f"--budget expects OWNER=AMOUNT, got {pair!r}")
+        owner, _, amount = pair.partition("=")
+        owner = owner.strip()
+        if not owner:
+            raise ValueError(f"--budget is missing an owner: {pair!r}")
+        try:
+            budgets[owner] = float(amount)
+        except ValueError as exc:
+            raise ValueError(f"--budget amount is not a number: {pair!r}") from exc
+    return budgets
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -95,6 +119,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         forecast_method=args.forecast_method,
         anomaly_group=_split_csv(args.anomaly_group),
         min_rel_increase=args.min_rel,
+        budgets=_parse_budgets(args.budget) or None,
     )
 
     if args.json:
