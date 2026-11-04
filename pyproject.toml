@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "platform-cost-observatory"
+version = "0.1.0"
+description = "AWS CUR analytics: tagging hygiene, cost allocation, month-end forecasting and anomaly detection."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Clarence Averion" }]
+keywords = ["aws", "cur", "finops", "cost", "observability", "pandas"]
+dependencies = [
+    "pandas==2.2.3",
+    "numpy==2.1.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.4"]
+
+[project.scripts]
+costobs = "costobs.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+costobs = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
