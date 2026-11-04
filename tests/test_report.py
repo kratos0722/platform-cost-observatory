@@ -27,7 +27,7 @@ def test_committed_sample_exists():
 
 def test_report_structure_is_json_serializable(sample_df):
     rep = report.build_report(sample_df)
-    assert set(rep) == {"meta", "tagging", "allocation", "forecast", "anomalies"}
+    assert set(rep) == {"meta", "tagging", "allocation", "forecast", "budgets", "anomalies"}
     # Must round-trip through JSON without a custom encoder.
     json.loads(json.dumps(rep))
 

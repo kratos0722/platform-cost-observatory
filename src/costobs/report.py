@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from typing import Iterable, Mapping, Optional
 
 import pandas as pd
 
-from . import allocation, anomaly, forecast, tagging
+from . import allocation, anomaly, budget, forecast, tagging
 from .forecast import TimestampLike
 from .ingest import REQUIRED_TAGS
 
@@ -38,6 +38,7 @@ def build_report(
     forecast_method: str = "run_rate",
     anomaly_group: Iterable[str] = ("owner",),
     min_rel_increase: float = 0.25,
+    budgets: Optional[Mapping[str, float]] = None,
 ) -> dict:
     """Run the full pipeline and return a nested, JSON-serializable dict."""
     required = list(required_tags)
@@ -50,6 +51,7 @@ def build_report(
     alloc_service = allocation.by_service(df).head(top_n)
 
     fc = forecast.forecast_month_end(df, as_of=as_of, method=forecast_method)
+    budget_rows = budget.check_budgets(fc, dict(budgets)) if budgets else pd.DataFrame()
     anoms = anomaly.detect_anomalies(
         df,
         group_cols=list(anomaly_group),
@@ -88,6 +90,7 @@ def build_report(
             "by_service": _records(alloc_service),
         },
         "forecast": _records(fc),
+        "budgets": _records(budget_rows),
         "anomalies": _records(anoms),
     }
 
@@ -152,6 +155,20 @@ def render_text(report: dict) -> str:
             )
     else:
         lines.append("    (no spend in the forecast month)")
+
+    budgets = report.get("budgets") or []
+    if budgets:
+        lines.append("")
+        lines.append("-- Budget tracking " + "-" * 51)
+        for row in budgets:
+            if row["status"] == "no_budget":
+                continue
+            flag = "[OVER]" if row["status"] == "over" else "  ok  "
+            lines.append(
+                f"    {flag} {str(row['owner']):<18} "
+                f"proj {_money(row['projected_month_end']):>12} / "
+                f"budget {_money(row['budget']):>12}  ({row['pct_of_budget']:.0f}%)"
+            )
 
     lines.append("")
     lines.append("-- Anomalies " + "-" * 57)

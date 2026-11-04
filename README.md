@@ -12,6 +12,7 @@ FinOps team actually asks:
 | **Cost allocation** | What does each owner / team / service / day cost, with untagged spend made explicit? |
 | **Forecasting** | Given month-to-date run rate, where will each owner land by month end? |
 | **Anomaly detection** | Which (owner \| service) spend spikes deserve a page today, and *why*? |
+| **Budget tracking** | Will any owner's *forecast* month-end spend breach its budget — early enough to act? |
 
 The pipeline is intentionally **deterministic and dependency-light** (pandas +
 numpy, no network, no randomness at runtime) so results are reproducible in
